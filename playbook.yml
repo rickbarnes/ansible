@@ -1,0 +1,144 @@
+
+- hosts: localhost
+  become: true
+  tasks:
+    - name: Install curl
+      apt:
+        name: curl
+        state: present
+
+    - name: Install xsel
+      apt:
+        name: xsel
+        state: present
+
+    - name: Install zsh
+      apt:
+        name: zsh
+        state: present
+
+    - name: Change default shell to zsh
+      shell: chsh -s $(which zsh) {{ ansible_user_id }}
+
+    - name: Install Oh My Zsh
+      shell: |
+        curl -Lo install.sh https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+        sh install.sh --unattended
+
+    - name: Install zsh plugin for autocompletion
+      ansible.builtin.git:
+        repo: 'https://github.com/zsh-users/zsh-autosuggestions'
+        dest: "{{ lookup('env', 'HOME') }}/.oh-my-zsh/plugins/zsh-autosuggestions"
+
+    - name: Update .zshrc to load zsh-autosuggestions
+      shell: sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
+      args:
+        executable: /bin/zsh
+
+    - name: install node
+      apt:
+        name: ['nodejs', 'npm']
+        state: present
+
+    - name: Install n (node version manager)
+      npm: 
+        name: n
+        global: true
+
+    - name: Install node version 20 LTS 
+      shell: n 20 
+
+
+    - name: Install Docker
+      apt:
+        name: apt-transport-https
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Update apt and install Docker CE
+      apt:
+        name: docker-ce
+        update_cache: yes
+        state: present
+
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+
+    - name: Download Neovim pre-built binary
+      shell: curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+      args:
+        executable: /bin/zsh
+
+    - name: Remove existing Neovim installation
+      file:
+        path: /opt/nvim
+        state: absent
+        force: true
+
+    - name: Extract Neovim binary
+      shell: sudo tar -C /opt -xzf nvim-linux64.tar.gz
+      args:
+        executable: /bin/zsh
+
+    - name: Add Neovim to PATH in .zshrc
+      lineinfile:
+        path: "{{ lookup('env', 'HOME') }}/.zshrc"
+        line: 'export PATH="$PATH:/opt/nvim-linux64/bin"'
+        create: yes
+
+    - name: Add GitHub to known hosts
+      shell: |
+        mkdir -p ~/.ssh
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+      args:
+        executable: /bin/bash
+
+    - name: Clone Neovim config repository
+      ansible.builtin.git:
+        repo: 'git@github.com:rickbarnes/neovim_config.git'
+        dest: "{{ lookup('env', 'HOME') }}/.config/nvim"
+
+    - name: Install pip
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install python3-venv
+      apt:
+        name: python3-venv
+        state: present
+
+    - name: Create a virtual environment for Neovim
+      command: python3 -m venv ~/.config/nvim/env
+
+    - name: Install Neovim pip package in the virtual environment
+      command: ~/.config/nvim/env/bin/pip install neovim
+
+    - name: Configure Neovim to use the virtual environment
+      lineinfile:
+        path: "{{ lookup('env', 'HOME') }}/.config/nvim/init.vim"
+        line: 'let g:python3_host_prog = expand("~/.config/nvim/env/bin/python")'
+        create: yes
+
+    - name: Install Neovim plugins using Mason
+      shell: |
+        export PATH="$PATH:/opt/nvim-linux64/bin"
+        nvim --headless "+MasonUpdate" +qall
+      args:
+        executable: /bin/zsh
+    - name: Reload shell to use zsh
+      shell: exec zsh
+      args:
+        executable: /bin/bash
