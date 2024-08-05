@@ -5,106 +5,29 @@
       apt:
         name: curl
         state: present
+      tags:
+        - base
 
     - name: Install xsel
       apt:
         name: xsel
         state: present
-
-    - name: Install zsh
-      apt:
-        name: zsh
-        state: present
-
-    - name: Change default shell to zsh
-      shell: chsh -s $(which zsh) {{ ansible_user_id }}
-
-    - name: Install Oh My Zsh
-      shell: |
-        curl -Lo install.sh https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
-        sh install.sh --unattended
-
-    - name: Install zsh plugin for autocompletion
-      ansible.builtin.git:
-        repo: "https://github.com/zsh-users/zsh-autosuggestions"
-        dest: "{{ lookup('env', 'HOME') }}/.oh-my-zsh/plugins/zsh-autosuggestions"
-
-    - name: Update .zshrc to load zsh-autosuggestions
-      shell: sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
-      args:
-        executable: /bin/zsh
-
-    - name: install node
-      apt:
-        name: ["nodejs", "npm"]
-        state: present
-
-    - name: Install n (node version manager)
-      npm:
-        name: n
-        global: true
-
-    - name: Install node version 20 LTS
-      shell: n 20
+      tags:
+        - base
 
     - name: Install fzf
       apt:
         name: fzf
         state: present
+      tags:
+        - base
 
     - name: Install ripgrep
       apt:
         name: ripgrep
         state: present
-
-    - name: Install Docker
-      apt:
-        name: apt-transport-https
-        state: present
-
-    - name: Add Docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
-    - name: Add Docker repository
-      apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-        state: present
-
-    - name: Update apt and install Docker CE
-      apt:
-        name: docker-ce
-        update_cache: yes
-        state: present
-
-    - name: Add current user to docker group
-      user:
-        name: "{{ ansible_user_id }}"
-        groups: docker
-        append: yes
-
-    - name: Download Neovim pre-built binary
-      shell: curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-      args:
-        executable: /bin/zsh
-
-    - name: Remove existing Neovim installation
-      file:
-        path: /opt/nvim
-        state: absent
-        force: true
-
-    - name: Extract Neovim binary
-      shell: sudo tar -C /opt -xzf nvim-linux64.tar.gz
-      args:
-        executable: /bin/zsh
-
-    - name: Add Neovim to PATH in .zshrc
-      lineinfile:
-        path: "{{ lookup('env', 'HOME') }}/.zshrc"
-        line: 'export PATH="$PATH:/opt/nvim-linux64/bin"'
-        create: yes
+      tags:
+        - base
 
     - name: Add GitHub to known hosts
       shell: |
@@ -112,33 +35,226 @@
         ssh-keyscan github.com >> ~/.ssh/known_hosts
       args:
         executable: /bin/bash
+      tags:
+        - base
+
+    - name: Install zsh
+      apt:
+        name: zsh
+        state: present
+      tags:
+        - zsh
+
+    - name: Change default shell to zsh
+      shell: chsh -s $(which zsh) {{ ansible_user_id }}
+      tags:
+        - zsh
+
+    - name: Install Oh My Zsh
+      shell: |
+        curl -Lo install.sh https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+        sh install.sh --unattended
+      tags:
+        - zsh
+
+    - name: Install zsh plugin for autocompletion
+      ansible.builtin.git:
+        repo: "https://github.com/zsh-users/zsh-autosuggestions"
+        dest: "{{ lookup('env', 'HOME') }}/.oh-my-zsh/plugins/zsh-autosuggestions"
+      tags:
+        - zsh
+
+    - name: Update .zshrc to load zsh-autosuggestions
+      shell: sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions)/' ~/.zshrc
+      args:
+        executable: /bin/zsh
+      tags:
+        - zsh
+
+    - name: install node
+      apt:
+        name: ["nodejs", "npm"]
+        state: present
+      tags:
+        - node
+
+    - name: Install n (node version manager)
+      npm:
+        name: n
+        global: true
+      tags:
+        - node
+
+    - name: Install node version 20 LTS
+      shell: n 20
+      tags:
+        - node
+
+    - name: Create directory for global npm packages
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.npm-global"
+        state: directory
+        mode: "0755"
+      tags:
+        - node
+
+    - name: Configure npm to use new directory for global packages
+      shell: |
+        npm config set prefix '~/.npm-global'
+      args:
+        executable: /bin/bash
+      tags:
+        - node
+
+    - name: Add npm global packages to PATH in .zshrc
+      lineinfile:
+        path: "{{ lookup('env', 'HOME') }}/.zshrc"
+        line: 'export PATH="$PATH:$HOME/.npm-global/bin"'
+        create: yes
+      tags:
+        - node
+
+    - name: Install prettier globally
+      npm:
+        name: prettier
+        global: yes
+      tags:
+        - node
+
+    - name: Install eslint globally
+      npm:
+        name: eslint
+        global: yes
+      tags:
+        - node
+
+    - name: Install eslint_d globally
+      npm:
+        name: eslint_d
+        global: yes
+      tags:
+        - node
+
+    - name: Install vite globally
+      npm:
+        name: vite
+        global: yes
+      tags:
+        - node
+
+    - name: Install Docker
+      apt:
+        name: apt-transport-https
+        state: present
+      tags:
+        - docker
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags:
+        - docker
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      tags:
+        - docker
+
+    - name: Update apt and install Docker CE
+      apt:
+        name: docker-ce
+        update_cache: yes
+        state: present
+      tags:
+        - docker
+
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+      tags:
+        - docker
+
+    - name: Download Neovim pre-built binary
+      shell: curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+      args:
+        executable: /bin/zsh
+      tags:
+        - neovim
+
+    - name: Remove existing Neovim installation
+      file:
+        path: /opt/nvim
+        state: absent
+        force: true
+      tags:
+        - neovim
+
+    - name: Extract Neovim binary
+      shell: sudo tar -C /opt -xzf nvim-linux64.tar.gz
+      args:
+        executable: /bin/zsh
+      tags:
+        - neovim
+
+    - name: Add Neovim to PATH in .zshrc
+      lineinfile:
+        path: "{{ lookup('env', 'HOME') }}/.zshrc"
+        line: 'export PATH="$PATH:/opt/nvim-linux64/bin"'
+        create: yes
+      tags:
+        - neovim
 
     - name: Clone Neovim config repository
       ansible.builtin.git:
         repo: "git@github.com:rickbarnes/neovim_config.git"
         dest: "{{ lookup('env', 'HOME') }}/.config/nvim"
+      tags:
+        - neovim
+
+    - name: Remove conflicting Neovim config file (init.vim)
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.config/nvim/init.vim"
+        state: absent
+      when: lookup('file', '{{ lookup('env', 'HOME') }}/.config/nvim/init.vim') is defined
+      tags:
+        - neovim
 
     - name: Install pip
       apt:
         name: python3-pip
         state: present
+      tags:
+        - neovim
 
     - name: Install python3-venv
       apt:
         name: python3-venv
         state: present
+      tags:
+        - neovim
 
     - name: Create a virtual environment for Neovim
       command: python3 -m venv ~/.config/nvim/env
+      tags:
+        - neovim
 
     - name: Install Neovim pip package in the virtual environment
       command: ~/.config/nvim/env/bin/pip install neovim
+      tags:
+        - neovim
 
     - name: Configure Neovim to use the virtual environment
       lineinfile:
         path: "{{ lookup('env', 'HOME') }}/.config/nvim/init.vim"
         line: 'let g:python3_host_prog = expand("~/.config/nvim/env/bin/python")'
         create: yes
+      tags:
+        - neovim
 
     - name: Install Neovim plugins using Mason
       shell: |
@@ -146,6 +262,98 @@
         nvim --headless "+MasonUpdate" +qall
       args:
         executable: /bin/zsh
+      tags:
+        - neovim
+
+    - name: Download Fira Code Mono Nerd Font
+      shell: |
+        curl -LO https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip
+      args:
+        executable: /bin/bash
+      tags:
+        - neovim
+
+    - name: Install FiraCode Nerd Font
+      shell: |
+        mkdir -p ~/.local/share/fonts
+        unzip FiraCode.zip -d ~/.local/share/fonts
+        fc-cache -fv
+      args:
+        executable: /bin/bash
+      tags:
+        - neovim
+
+    - name: Clean up FiraCode Nerd Font zip file
+      file:
+        path: FiraCode.zip
+        state: absent
+      tags:
+        - neovim
+
+    - name: Download dotnet-install script
+      shell: |
+        wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+      args:
+        executable: /bin/bash
+      tags:
+        - dotnet
+
+    - name: Grant execute permissions to dotnet-install script
+      shell: |
+        chmod +x ./dotnet-install.sh
+      args:
+        executable: /bin/bash
+      tags:
+        - dotnet
+
+    - name: Install .NET 8 SDK
+      shell: |
+        ./dotnet-install.sh --channel 8.0
+      args:
+        executable: /bin/bash
+      tags:
+        - dotnet
+
+    - name: Add .NET SDK to PATH in .zshrc
+      lineinfile:
+        path: "{{ lookup('env', 'HOME') }}/.zshrc"
+        line: 'export PATH="$PATH:~/.dotnet"'
+        create: yes
+      tags:
+        - dotnet
+
+    - name: Clean up dotnet-install script
+      file:
+        path: dotnet-install.sh
+        state: absent
+      tags:
+        - dotnet
+
+    - name: Download Omnisharp
+      shell: |
+        curl -L -o omnisharp.zip https://github.com/OmniSharp/omnisharp-roslyn/releases/latest/download/omnisharp-linux-x64-net6.0.zip
+      args:
+        executable: /bin/bash
+      tags:
+        - dotnet
+
+    - name: Install Omnisharp
+      shell: |
+        mkdir -p ~/.local/share/omnisharp
+        unzip omnisharp.zip -d ~/.local/share/omnisharp
+        chmod +x ~/.local/share/omnisharp/OmniSharp
+      args:
+        executable: /bin/bash
+      tags:
+        - dotnet
+
+    - name: Clean up Omnisharp zip file
+      file:
+        path: omnisharp.zip
+        state: absent
+      tags:
+        - dotnet
+
     - name: Reload shell to use zsh
       shell: exec zsh
       args:
