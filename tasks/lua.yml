@@ -1,0 +1,112 @@
+- name: Install build dependencies
+  apt:
+    name:
+      - build-essential
+      - libreadline-dev
+      - unzip
+    state: present
+  tags:
+    - lua
+
+- name: Download Lua
+  get_url:
+    url: http://www.lua.org/ftp/lua-5.3.5.tar.gz
+    dest: /tmp/lua-5.3.5.tar.gz
+    mode: "0644"
+  retries: 3
+  delay: 5
+  tags:
+    - lua
+
+- name: Verify Lua tarball
+  stat:
+    path: /tmp/lua-5.3.5.tar.gz
+  register: lua_tarball
+  tags:
+    - lua
+
+- name: Fail if Lua tarball is not downloaded
+  fail:
+    msg: "Lua tarball was not downloaded correctly."
+  when: not lua_tarball.stat.exists
+  tags:
+    - lua
+
+- name: Extract Lua
+  shell: |
+    tar -zxf /tmp/lua-5.3.5.tar.gz -C /tmp
+  args:
+    executable: /bin/bash
+  tags:
+    - lua
+
+- name: Build and install Lua
+  shell: |
+    cd /tmp/lua-5.3.5
+    make linux test
+    sudo make install
+  args:
+    executable: /bin/bash
+  tags:
+    - lua
+
+- name: Clean up Lua tar file
+  file:
+    path: /tmp/lua-5.3.5.tar.gz
+    state: absent
+  tags:
+    - lua
+
+- name: Download LuaRocks
+  get_url:
+    url: https://luarocks.org/releases/luarocks-3.8.0.tar.gz
+    dest: /tmp/luarocks.tar.gz
+    mode: "0644"
+  retries: 3
+  delay: 5
+  tags:
+    - lua
+
+- name: Extract LuaRocks
+  ansible.builtin.unarchive:
+    src: /tmp/luarocks.tar.gz
+    dest: /tmp
+    remote_src: yes
+  tags:
+    - lua
+
+- name: Configure LuaRocks
+  command: ./configure --with-lua-include=/usr/local/include
+  args:
+    chdir: /tmp/luarocks-3.8.0
+  tags:
+    - lua
+
+- name: Build LuaRocks
+  command: make
+  args:
+    chdir: /tmp/luarocks-3.8.0
+  tags:
+    - lua
+
+- name: Install LuaRocks
+  command: make install
+  args:
+    chdir: /tmp/luarocks-3.8.0
+  tags:
+    - lua
+
+- name: Clean up LuaRocks tar file
+  file:
+    path: /tmp/luarocks.tar.gz
+    state: absent
+  tags:
+    - lua
+
+- name: Add LuaRocks to PATH in .zshrc
+  lineinfile:
+    path: "{{ lookup('env', 'HOME') }}/.zshrc"
+    line: 'export PATH="$PATH:/usr/local/bin"'
+    create: yes
+  tags:
+    - lua

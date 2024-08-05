@@ -1,0 +1,70 @@
+- name: Download dotnet-install script
+  shell: |
+    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+  args:
+    executable: /bin/bash
+  tags:
+    - dotnet
+
+- name: Grant execute permissions to dotnet-install script
+  shell: |
+    chmod +x ./dotnet-install.sh
+  args:
+    executable: /bin/bash
+  tags:
+    - dotnet
+
+- name: Install .NET 8 SDK
+  shell: |
+    ./dotnet-install.sh --channel 8.0
+  args:
+    executable: /bin/bash
+  tags:
+    - dotnet
+
+- name: Add .NET SDK to PATH in .zshrc
+  lineinfile:
+    path: "{{ lookup('env', 'HOME') }}/.zshrc"
+    line: 'export PATH="$PATH:~/.dotnet"'
+    create: yes
+  tags:
+    - dotnet
+
+- name: Clean up dotnet-install script
+  file:
+    path: dotnet-install.sh
+    state: absent
+  tags:
+    - dotnet
+
+- name: Download Omnisharp
+  shell: |
+    curl -L -o omnisharp.zip https://github.com/OmniSharp/omnisharp-roslyn/releases/latest/download/omnisharp-linux-x64-net6.0.zip
+  args:
+    executable: /bin/bash
+  tags:
+    - dotnet
+
+- name: Install Omnisharp
+  shell: |
+    mkdir -p ~/.local/share/omnisharp
+    unzip omnisharp.zip -d ~/.local/share/omnisharp
+    chmod +x ~/.local/share/omnisharp/OmniSharp
+  args:
+    executable: /bin/bash
+  tags:
+    - dotnet
+
+- name: Clean up Omnisharp zip file
+  file:
+    path: omnisharp.zip
+    state: absent
+  tags:
+    - dotnet
+
+- name: Source .zshrc to update the current session (dotnet)
+  shell: source ~/.zshrc
+  args:
+    executable: /bin/zsh
+  tags:
+    - dotnet

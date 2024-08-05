@@ -1,0 +1,156 @@
+- name: Fetch the latest stable version of Go
+  shell: curl -s https://go.dev/VERSION?m=text | grep -oP 'go[0-9.]+'
+  register: go_version
+  tags:
+    - go
+
+- name: Set the latest version of Go
+  set_fact:
+    latest_go_version: "{{ go_version.stdout }}"
+  tags:
+    - go
+
+- name: Download the latest stable version of Go
+  shell: |
+    curl -LO https://go.dev/dl/{{ latest_go_version }}.linux-amd64.tar.gz
+  args:
+    executable: /bin/bash
+  register: go_download
+  tags:
+    - go
+
+- name: Fail if Go tarball was not downloaded
+  fail:
+    msg: "Failed to download the latest stable version of Go."
+  when: go_download.rc != 0
+  tags:
+    - go
+
+- name: Remove existing Go installation
+  file:
+    path: /usr/local/go
+    state: absent
+    force: true
+  tags:
+    - go
+
+- name: Extract Go binary
+  shell: |
+    tar -C /usr/local -xzf {{ latest_go_version }}.linux-amd64.tar.gz
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Add Go to PATH in .zshrc
+  lineinfile:
+    path: "{{ lookup('env', 'HOME') }}/.zshrc"
+    line: 'export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"'
+    create: yes
+  tags:
+    - go
+
+- name: Ensure Go bin directory exists
+  file:
+    path: "{{ lookup('env', 'HOME') }}/go/bin"
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+  tags:
+    - go
+
+- name: Source .zshrc to update the current session
+  shell: source ~/.zshrc
+  args:
+    executable: /bin/zsh
+  tags:
+    - go
+
+- name: Install goimports
+  shell: |
+    /usr/local/go/bin/go install golang.org/x/tools/cmd/goimports@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install gopls
+  shell: |
+    /usr/local/go/bin/go install golang.org/x/tools/gopls@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install golines
+  shell: |
+    /usr/local/go/bin/go install github.com/segmentio/golines@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install gomodifytags
+  shell: |
+    /usr/local/go/bin/go install github.com/fatih/gomodifytags@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install gotests
+  shell: |
+    /usr/local/go/bin/go install github.com/cweill/gotests/...@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install gotestsum
+  shell: |
+    /usr/local/go/bin/go install gotest.tools/gotestsum@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install gofumpt
+  shell: |
+    /usr/local/go/bin/go install mvdan.cc/gofumpt@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install golangci-lint
+  shell: |
+    /usr/local/go/bin/go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install go-enum
+  shell: |
+    /usr/local/go/bin/go install github.com/abice/go-enum@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Install gorename
+  shell: |
+    /usr/local/go/bin/go install golang.org/x/tools/cmd/gorename@latest
+  args:
+    executable: /bin/bash
+  tags:
+    - go
+
+- name: Clean up Go tar file
+  shell: |
+    rm -f {{ latest_go_version }}.linux-amd64.tar.gz
+  args:
+    executable: /bin/bash
+  tags:
+    - go
