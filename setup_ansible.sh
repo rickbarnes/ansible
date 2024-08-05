@@ -27,7 +27,7 @@ eval "$(ssh-agent -s)"
 ssh-add /root/.ssh/id_rsa
 
 # Run the Ansible playbook
-ansible-playbook /playbook.yml
+ansible-playbook playbook.yml
 
 # Start a new shell to allow testing
 /bin/bash

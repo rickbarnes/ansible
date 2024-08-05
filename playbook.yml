@@ -1,4 +1,3 @@
-
 - hosts: localhost
   become: true
   tasks:
@@ -27,7 +26,7 @@
 
     - name: Install zsh plugin for autocompletion
       ansible.builtin.git:
-        repo: 'https://github.com/zsh-users/zsh-autosuggestions'
+        repo: "https://github.com/zsh-users/zsh-autosuggestions"
         dest: "{{ lookup('env', 'HOME') }}/.oh-my-zsh/plugins/zsh-autosuggestions"
 
     - name: Update .zshrc to load zsh-autosuggestions
@@ -37,17 +36,26 @@
 
     - name: install node
       apt:
-        name: ['nodejs', 'npm']
+        name: ["nodejs", "npm"]
         state: present
 
     - name: Install n (node version manager)
-      npm: 
+      npm:
         name: n
         global: true
 
-    - name: Install node version 20 LTS 
-      shell: n 20 
+    - name: Install node version 20 LTS
+      shell: n 20
 
+    - name: Install fzf
+      apt:
+        name: fzf
+        state: present
+
+    - name: Install ripgrep
+      apt:
+        name: ripgrep
+        state: present
 
     - name: Install Docker
       apt:
@@ -107,7 +115,7 @@
 
     - name: Clone Neovim config repository
       ansible.builtin.git:
-        repo: 'git@github.com:rickbarnes/neovim_config.git'
+        repo: "git@github.com:rickbarnes/neovim_config.git"
         dest: "{{ lookup('env', 'HOME') }}/.config/nvim"
 
     - name: Install pip
